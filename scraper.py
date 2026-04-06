@@ -41,7 +41,7 @@ session.headers.update(headers)
 
 # scraping function to extract episode data
 def scrape_episode(n, retries=3):
-    url = f"https://onepiece.fandom.com/es/wiki/Episodio_{n}"
+    url = f"https://onepiece.fandom.com/wiki/Episode_{n}"
 
     for attempt in range(retries):
         try:
@@ -67,12 +67,12 @@ def scrape_episode(n, retries=3):
                 data = {
                     "episodio": n,
                     "fecha_emision": get_data("Airdate"),
-                    "guion": get_data("Guión"),
+                    "guion": get_data("Screen"),
                     "arte": get_data("Art"),
-                    "animacion": get_data("Animación"),
-                    "direccion": get_data("Director"),
-                    "tv_rating": get_td_data("Rating"),
-                    "rank": get_td_data("Rango")
+                    "animacion": get_data("Ad"),
+                    "direccion": get_data("Ed"),
+                    "tv_rating": get_td_data("rating"),
+                    "rank": get_td_data("rank")
                 }
 
                 return data
