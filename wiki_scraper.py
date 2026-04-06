@@ -55,7 +55,22 @@ def scrape_episode(n, retries=3):
                     tag = soup.find("div", {"data-source": source})
                     if tag:
                         value = tag.find("div", class_="pi-data-value")
-                        return value.get_text(strip=True) if value else None
+                        if value: 
+                            # Extract raw HTML inside the div
+                            raw_html = str(value)
+                            # Split by <br> tags
+                            parts = raw_html.split("<br/>")
+
+                            results = []
+                            for part in parts:
+                                text = BeautifulSoup(part, "html.parser").get_text(strip=True)
+                                if "-" in text:
+                                    _, en = text.split("-", 1)
+                                    results.append(en.strip())
+
+                                else:
+                                    results.append(text.strip())
+                            return results
                     return None
 
                 def get_td_data(source):
