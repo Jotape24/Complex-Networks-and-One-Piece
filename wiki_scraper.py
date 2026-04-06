@@ -1,3 +1,4 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 import cloudscraper
@@ -17,7 +18,8 @@ fields = [
     "animacion",
     "direccion",
     "tv_rating",
-    "rank"
+    "rank",
+    "n de paginas"
 ]
 
 headers = {
@@ -79,6 +81,30 @@ def scrape_episode(n, retries=3):
                         text = tag.get_text(strip=False)
                         return text.split("-")[0]
                     return None
+                
+                def get_manga_pages():
+                    count = 0
+                    tag = soup.find("div", {"data-source": "chapter"})
+                    if tag:
+                        value = tag.find("div", class_="pi-data-value")
+                        if value: 
+                            # Extract raw HTML inside the div
+                            raw_html = str(value)
+                            # Split by <br> tags
+                            parts = raw_html.split("<br/>")
+                            for part in parts:
+                                if part != "</div>" and ("Filler" not in part):
+                                    
+                                    part = part.split("p.")[1]
+                                    text = BeautifulSoup(part, "html.parser").get_text(strip=True)
+                                    pages = re.findall(r'-?\d*\.?\d+', text)
+                                    pages = [float(x) for x in pages]
+                                    if len(pages) > 1:
+                                        count += abs(pages[1])-pages[0]
+                                    else:
+                                        count += 1
+                    return count
+                
 
                 data = {
                     "episodio": n,
@@ -88,7 +114,8 @@ def scrape_episode(n, retries=3):
                     "animacion": get_data("Ad"),
                     "direccion": get_data("Ed"),
                     "tv_rating": get_td_data("rating"),
-                    "rank": get_td_data("rank")
+                    "rank": get_td_data("rank"),
+                    "n de paginas": get_manga_pages()
                 }
 
                 return data
@@ -100,6 +127,7 @@ def scrape_episode(n, retries=3):
             print(f"[Attempt {attempt+1}] Error in episode {n}: {e}")
 
         time.sleep(2)
+
 
 # CSV writing
 with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
