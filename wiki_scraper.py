@@ -61,7 +61,8 @@ def scrape_episode(n, retries=3):
                 def get_td_data(source):
                     tag = soup.find("td", {"data-source": source})
                     if tag:
-                        return tag.get_text(strip=True)
+                        text = tag.get_text(strip=False)
+                        return text.split("-")[0]
                     return None
 
                 data = {
