@@ -93,8 +93,7 @@ def scrape_episode(n, retries=3):
                             # Split by <br> tags
                             parts = raw_html.split("<br/>")
                             for part in parts:
-                                if part != "</div>" and ("Filler" not in part):
-                                    
+                                if "p." in part:
                                     part = part.split("p.")[1]
                                     text = BeautifulSoup(part, "html.parser").get_text(strip=True)
                                     pages = re.findall(r'-?\d*\.?\d+', text)
