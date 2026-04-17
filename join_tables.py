@@ -40,6 +40,11 @@ df_merged = pd.merge(
     how="inner"
 )
 
+df_merged["votos"] = df_merged["votes_imdb"] + df_merged["votos_MAL"]
+df_merged["rating"] = (df_merged["rating_imdb"]*df_merged["votes_imdb"] + df_merged["puntuacion_MAL"]*df_merged["votos_MAL"])/df_merged["votos"]
+df_merged["rating"] = df_merged["rating"].round(2)
+df_merged = df_merged.drop(columns=["rating_imdb", "votes_imdb", "puntuacion_MAL", "votos_MAL"])
+
 # Save result
 df_merged.to_csv("one_piece_merged.csv", index=False)
 
