@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -6,9 +7,10 @@ import csv
 import time
 import random
 
-# Csv output file
-output_file = "datasets/one_piece_episodes.csv"
 
+# Csv output file
+BASE_DIR = Path(__file__).resolve().parent
+output_file = BASE_DIR / ".." / "datasets" / "one_piece_episodes.csv"
 # Fields to extract
 fields = [
     "episodio",

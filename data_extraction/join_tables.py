@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import pandas as pd
 
+
 # File paths
-file_episodes = "datasets/one_piece_episodes.csv"
-file_imdb = "datasets/one_piece_imdb.csv"
-file_mal = "datasets/one_piece_episodes_my_anime_list.csv"
+BASE_DIR = Path(__file__).resolve().parent
+file_episodes = BASE_DIR / ".." / "datasets" / "one_piece_episodes.csv"
+file_imdb = BASE_DIR / ".." / "datasets" / "one_piece_imdb.csv"
+file_mal = BASE_DIR / ".." / "datasets" / "one_piece_episodes_my_anime_list.csv"
 
 # Load CSVs
 df_episodes = pd.read_csv(file_episodes)
@@ -46,6 +50,6 @@ df_merged["rating"] = df_merged["rating"].round(2)
 df_merged = df_merged.drop(columns=["rating_imdb", "votes_imdb", "puntuacion_MAL", "votos_MAL"])
 
 # Save result
-df_merged.to_csv("datasets/one_piece_merged.csv", index=False)
+df_merged.to_csv(BASE_DIR / ".." / "datasets" / "one_piece_merged.csv", index=False)
 
 print("Merge completed! Saved as one_piece_merged.csv")

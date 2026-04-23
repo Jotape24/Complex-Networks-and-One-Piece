@@ -1,13 +1,16 @@
+from pathlib import Path
 import pandas as pd
-import os
 
 # To execute this code, make sure you have the IMDb TSV files in a "datasets" folder.
 # Download link: https://datasets.imdbws.com/
 
+
 # Path to IMDb datasets
-path_title = "datasets/title.basics.tsv"
-path_episode = "datasets/title.episode.tsv"
-path_ratings = "datasets/title.ratings.tsv"
+BASE_DIR = Path(__file__).resolve().parent
+
+path_title = BASE_DIR / ".." / "datasets" / "title.basics.tsv"
+path_episode = BASE_DIR / ".." / "datasets" / "title.episode.tsv"
+path_ratings = BASE_DIR / ".." / "datasets" / "title.ratings.tsv"
 
 # Read datasets
 title = pd.read_csv(path_title, sep="\t", dtype=str, na_values="\\N")
@@ -49,7 +52,7 @@ table = table.rename(columns={
     "numVotes": "votes"
 })
 
-output_path = "datasets/one_piece_imdb.csv"
+output_path = BASE_DIR / ".." / "datasets" / "one_piece_imdb.csv"
 table.to_csv(output_path, index=False, encoding="utf-8")
 
 print(f"CSV guardado en: {output_path}")

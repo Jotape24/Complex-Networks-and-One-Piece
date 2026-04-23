@@ -4,9 +4,11 @@ import cloudscraper
 import csv
 import time
 import random
+from pathlib import Path
 
 # Csv output file
-output_file = "datasets/one_piece_episodes_my_anime_list.csv"
+BASE_DIR = Path(__file__).resolve().parent
+output_file = BASE_DIR / ".." / "datasets" / "one_piece_episodes_my_anime_list.csv"
 
 # Fields to extract
 fields = [
