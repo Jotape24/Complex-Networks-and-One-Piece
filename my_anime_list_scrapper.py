@@ -6,7 +6,7 @@ import time
 import random
 
 # Csv output file
-output_file = "one_piece_episodes_my_anime_list.csv"
+output_file = "datasets/one_piece_episodes_my_anime_list.csv"
 
 # Fields to extract
 fields = [

@@ -49,7 +49,7 @@ table = table.rename(columns={
     "numVotes": "votes"
 })
 
-output_path = "one_piece_imdb.csv"
+output_path = "datasets/one_piece_imdb.csv"
 table.to_csv(output_path, index=False, encoding="utf-8")
 
 print(f"CSV guardado en: {output_path}")
