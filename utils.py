@@ -2,6 +2,7 @@ import networkx as nx
 import pandas as pd
 import ast
 from networkx.algorithms import bipartite
+import matplotlib.pyplot as plt
 import powerlaw
 
 
@@ -208,3 +209,44 @@ def bin_frequency(data: list[float], logaritmic_bins=False):
     x, y = powerlaw.pdf(data, linear_bins=True)
   x = x[0:-1] # se descarta el último porque es la posición donde iría el siguiente bin
   return x, y
+
+
+def plot_distribution(values, title):
+
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+    # Sin bins
+    x, y = raw_frequency(values)
+    axes[0,0].scatter(x, y)
+    axes[0,0].set_title("Sin bins")
+
+    # Bins lineales
+    x, y = bin_frequency(values)
+    axes[0,1].scatter(x, y)
+    axes[0,1].set_title("Bins lineales")
+
+    # Bins log
+    x, y = bin_frequency(values, logaritmic_bins=True)
+    axes[0,2].scatter(x, y)
+    axes[0,2].set_title("Bins log")
+
+    # Sin bins + loglog
+    x, y = raw_frequency(values)
+    axes[1,0].scatter(x, y)
+    axes[1,0].loglog()
+    axes[1,0].set_title("Sin bins (log-log)")
+
+    # Bins lineales + loglog
+    x, y = bin_frequency(values)
+    axes[1,1].scatter(x, y)
+    axes[1,1].loglog()
+    axes[1,1].set_title("Bins lineales (log-log)")
+
+    # Bins log + loglog
+    x, y = bin_frequency(values, logaritmic_bins=True)
+    axes[1,2].scatter(x, y)
+    axes[1,2].loglog()
+    axes[1,2].set_title("Bins log (log-log)")
+
+    fig.suptitle(title)
+    plt.show()
