@@ -1,4 +1,7 @@
 import networkx as nx
+import pandas as pd
+import ast
+from networkx.algorithms import bipartite
 
 @nx._dispatchable(
     graphs="B", preserve_node_attrs=True, preserve_graph_attrs=True, returns_graph=True
@@ -73,3 +76,112 @@ def projected_graph_custom(B, nodes, multigraph=False):
                     nx.set_edge_attributes(G2, {(u, n): d_attr})
         return G2
     return G
+
+# Función para convertir string de lista a lista real
+def parse_list(x):
+    if pd.isna(x):
+        return []
+    try:
+        return ast.literal_eval(x)
+    except:
+        return []
+
+def bipartite_graph(df):
+    """Este script crea un grafo bipartito entre episodios y staff, y guarda el grafo en formato GEXF para su análisis posterior."""
+
+    # Columnas donde hay listas de personas
+    staff_columns = ["guion", "arte", "animacion", "direccion"]
+    value_columns = ["n de paginas", "rating", "votos"]
+
+    # Crear grafo bipartito
+    bipartite_graph = nx.Graph()
+
+    for _, row in df.iterrows():
+        episodio = f"ep_{int(row['episodio'])}"
+        
+        # Agregar nodo episodio
+        bipartite_graph.add_node(episodio, bipartite="episode")
+
+        value_dict = {}
+        for val in value_columns:
+            value_dict[val] = row[val]
+        
+        nx.set_node_attributes(bipartite_graph, {episodio: value_dict})
+
+        # Iterar por todas las áreas del staff
+        for col in staff_columns:
+            personas = parse_list(row[col])
+            
+            for persona in personas:
+                persona_clean = persona.split("(")[0].strip()
+
+                # Agregar nodo persona
+                if persona_clean == '':
+                    continue
+                bipartite_graph.add_node(persona_clean, bipartite="staff")
+
+                # Agregar arista
+                bipartite_graph.add_edge(persona_clean, episodio)
+
+
+    print(f"Number of nodes: {bipartite_graph.number_of_nodes()}, Number of edges: {bipartite_graph.number_of_edges()}")
+    nx.write_gexf(bipartite_graph, "one_piece.gexf")
+    return bipartite_graph
+
+
+def bipartite_projection(B, group):
+    """Proyección del grafo bipartito para obtener relaciones entre el staff basado en los episodios en los que han trabajado juntos."""
+    # Obtener nodos de staff
+    staff_nodes = {n for n, d in B.nodes(data=True) if d["bipartite"] == group}
+
+    # Proyección
+    bipartite_staff = bipartite.weighted_projected_graph(B, staff_nodes)
+
+    print(f"Number of nodes: {bipartite_staff.number_of_nodes()}, Number of edges: {bipartite_staff.number_of_edges()}")
+    nx.write_gexf(bipartite_staff, f"one_piece_{group}_projection.gexf")
+    return bipartite_staff
+
+
+
+def weighted_episode_rating(B, df, group="staff"):
+    """
+    Calcula el rating promedio ponderado por votos para cada nodo perteneciente al grupo indicado.
+    """
+
+    nodes = {
+        n for n, d in B.nodes(data=True)
+        if d["bipartite"] == group
+    }
+
+    episode_info = (
+        df.set_index("episodio")[["rating", "votos"]]
+        .to_dict("index")
+    )
+
+    ratings = {}
+
+    for node in nodes:
+
+        weighted_sum = 0
+        total_votes = 0
+
+        for ep in B.neighbors(node):
+
+            ep_num = int(ep.replace("ep_", ""))
+
+            if ep_num not in episode_info:
+                continue
+
+            rating = episode_info[ep_num]["rating"]
+            votes = episode_info[ep_num]["votos"]
+
+            if pd.isna(rating) or pd.isna(votes):
+                continue
+
+            weighted_sum += rating * votes
+            total_votes += votes
+
+        if total_votes > 0:
+            ratings[node] = weighted_sum / total_votes
+
+    return ratings
