@@ -2,6 +2,8 @@ import networkx as nx
 import pandas as pd
 import ast
 from networkx.algorithms import bipartite
+import powerlaw
+
 
 @nx._dispatchable(
     graphs="B", preserve_node_attrs=True, preserve_graph_attrs=True, returns_graph=True
@@ -185,3 +187,24 @@ def weighted_episode_rating(B, df, group="staff"):
             ratings[node] = weighted_sum / total_votes
 
     return ratings
+
+
+
+"""Funciones para calcular frecuencias de valores en data, tanto para valores crudos como para bins."""
+def raw_frequency(data: list[float]):
+  value_frequency = []
+  # sacar valores distintos y ordenarlos
+  distinct_values = list(set(data))
+  distinct_values.sort()
+  # contar valores en data
+  for value in distinct_values:
+    value_frequency.append(data.count(value))
+  return distinct_values, value_frequency
+
+def bin_frequency(data: list[float], logaritmic_bins=False):
+  if logaritmic_bins:
+    x, y = powerlaw.pdf(data, linear_bins=False)
+  else:
+    x, y = powerlaw.pdf(data, linear_bins=True)
+  x = x[0:-1] # se descarta el último porque es la posición donde iría el siguiente bin
+  return x, y
