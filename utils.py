@@ -285,6 +285,44 @@ def plot_rating_vs_metric(
     plt.tight_layout()
     plt.show()
 
+def plot_metric_vs_metric(
+    metric1,
+    metric2,
+    metric1_name="Metric1",
+    metric2_name="Metric2",
+):
+    """
+    metric       : dict {nodo: valor}
+    metric_name  : nombre para títulos y ejes
+    """
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    configs = [
+        ("Linear-Linear", False, False),
+        ("Log X", True, False),
+        ("Log Y", False, True),
+        ("Log X + Log Y", True, True)
+    ]
+
+    for ax, (title, logx, logy) in zip(axes.flatten(), configs):
+
+        ax.scatter(metric1, metric2)
+
+        if logx:
+            ax.set_xscale("log")
+
+        if logy:
+            ax.set_yscale("log")
+
+        ax.set_title(title)
+        ax.set_xlabel(metric1_name)
+        ax.set_ylabel(metric2_name)
+        ax.grid(True)
+
+    plt.suptitle(f"{metric1_name} vs {metric2_name}", fontsize=14)
+    plt.tight_layout()
+    plt.show()
 
 def get_members_combination(nodes):
     largo = len(nodes)
