@@ -4,6 +4,7 @@ import ast
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import powerlaw
+import numpy as np
 
 
 @nx._dispatchable(
@@ -249,4 +250,59 @@ def plot_distribution(values, title):
     axes[1,2].set_title("Bins log (log-log)")
 
     fig.suptitle(title)
+    plt.show()
+
+def plot_rating_vs_metric(
+    G,
+    metric,
+    metric_name="Metric",
+    rating_attr="rating",
+    bipartite_value="episode"
+):
+    """
+    G            : grafo NetworkX
+    metric       : dict {nodo: valor} o vista tipo G.degree()
+    metric_name  : nombre para títulos y ejes
+    """
+
+    ratings = []
+    metric_values = []
+
+    for node, data in G.nodes(data=True):
+
+        if data.get("bipartite") == bipartite_value:
+
+            rating = data.get(rating_attr)
+
+            if pd.notna(rating):
+
+                ratings.append(rating)
+                metric_values.append(metric[node])
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    configs = [
+        ("Linear-Linear", False, False),
+        ("Log X", True, False),
+        ("Log Y", False, True),
+        ("Log X + Log Y", True, True)
+    ]
+
+    for ax, (title, logx, logy) in zip(axes.flatten(), configs):
+
+        ax.scatter(ratings, metric_values)
+
+        if logx:
+            ax.set_xscale("log")
+
+        if logy:
+            ax.set_yscale("log")
+
+        ax.set_title(title)
+        ax.set_xlabel("Rating")
+        ax.set_ylabel(metric_name)
+        ax.grid(True)
+
+    plt.suptitle(f"Rating vs {metric_name}", fontsize=14)
+    plt.tight_layout()
     plt.show()
