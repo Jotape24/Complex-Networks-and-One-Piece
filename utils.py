@@ -5,37 +5,15 @@ from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
 import powerlaw
 import numpy as np
-
+from collections import defaultdict
 
 @nx._dispatchable(
     graphs="B", preserve_node_attrs=True, preserve_graph_attrs=True, returns_graph=True
 )
 def projected_graph_custom(B, nodes, multigraph=False):
-    r"""Returns the projection of B onto one of its node sets.
-
-    Returns the graph G that is the projection of the bipartite graph B
-    onto the specified nodes. They retain their attributes and are connected
-    in G if they have a common neighbor in B. Deleted nodes maintain their
-    attributes as an edge.
-
-    Parameters
-    ----------
-    B : NetworkX graph
-      The input graph should be bipartite.
-
-    nodes : list or iterable
-      Nodes to project onto (the "bottom" nodes).
-
-    multigraph: bool (default=False)
-       If True return a multigraph where the multiple edges represent multiple
-       shared neighbors.  They edge key in the multigraph is assigned to the
-       label of the neighbor.
-
-    Returns
-    -------
-    Graph : NetworkX graph or multigraph
-       A graph that is the projection onto the given nodes, maintaining both
-       type of nodes attributes, one as a node and the other type as an edge.
+    """
+    Genera la proyección de B a uno de sus sets de nodos. Los nodos
+    eliminados mantienen sus atributos en forma de arista.
     """
     if B.is_multigraph():
         raise nx.NetworkXError("not defined for multigraphs")
@@ -68,14 +46,14 @@ def projected_graph_custom(B, nodes, multigraph=False):
                     votes = 0
                     pages = 0
                     rating = 0
-                    episodes = []
+                    episodes = set()
                     edge_data = G.get_edge_data(u, n)
                     for edge_key, attrs in edge_data.items():
                         pages += attrs["n de paginas"]
                         votes += attrs["votos"]
                         rating += attrs["votos"]*attrs["rating"]
-                        episodes.append(edge_key)
-                    d_attr = {"n de paginas": pages, "rating": rating/votes, "votos": votes, "n episodios": len(episodes)}
+                        episodes.add(edge_key)
+                    d_attr = {"n de paginas": pages, "rating": rating/votes, "votos": votes, "n_episodios": len(episodes)}
                     G2.add_edge(u, n)
                     nx.set_edge_attributes(G2, {(u, n): d_attr})
         return G2
@@ -306,3 +284,107 @@ def plot_rating_vs_metric(
     plt.suptitle(f"Rating vs {metric_name}", fontsize=14)
     plt.tight_layout()
     plt.show()
+
+
+def get_members_combination(nodes):
+    largo = len(nodes)
+    nodes_2 = []
+    for i in range(largo):
+        if i == (largo - 1):
+            break
+        for l in range(i + 1, largo):
+            if l == largo:
+                break
+            nodes_2.append((nodes[i], nodes[l]))
+    return nodes_2
+
+def avg_previous_team_rating(B, nodes, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    updated_nodes = []
+    for u in nodes:
+        if B.has_node(u):
+            updated_nodes.append(u)
+    for u in updated_nodes:
+        suma_temp = 0
+        for ep in B[u]:
+            suma_temp += B.nodes[ep]["rating"]
+        suma += (suma_temp/len(B[u]))
+    
+    return (suma/largo)
+
+def avg_previous_individual_exp(B, nodes, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    updated_nodes = []
+    for u in nodes:
+        if B.has_node(u):
+            updated_nodes.append(u)
+    for u in updated_nodes:
+        suma += len(B[u])
+    
+    return (suma/largo)
+
+def avg_previous_tm_exp(G, nodes_2, largo):
+    """ Calcula la experiencia promedio previa de un set de nodos."""
+    if largo == 0:
+        return 0
+    suma = 0
+    for u, v in nodes_2:
+        if not G.has_node(u) or not G.has_node(v):
+            continue
+        if G.has_edge(u, v):
+            node_attrs = G.get_edge_data(u, v)
+            suma += node_attrs["n_episodios"]
+    
+    return (suma/largo)
+
+def avg_previous_tm_shared_colabs(G, nodes_2, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    for u, v in nodes_2:
+        if not G.has_node(u) or not G.has_node(v):
+            continue
+        suma += len(nx.common_neighbors(G, u, v))
+    
+    return (suma/largo)
+
+def avg_previous_tm_clustering_coeff(G, nodes, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    updated_nodes = []
+    for u in nodes:
+        if G.has_node(u):
+            updated_nodes.append(u)
+    clustering = nx.clustering(G, nodes)
+    for u in updated_nodes:
+        suma += clustering[u]
+    
+    return (suma/largo)
+
+def avg_previous_tm_closeness(G, nodes, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    for u in nodes:
+        if G.has_node(u):
+            suma += nx.closeness_centrality(G, u)
+    
+    return (suma/largo)
+
+def avg_previous_tm_betweenness(G, nodes, prev_betweenness, largo):
+    if largo == 0:
+        return 0
+    suma = 0
+    updated_nodes = []
+    for u in nodes:
+        if G.has_node(u):
+            updated_nodes.append(u)
+    for u in updated_nodes:
+        suma += prev_betweenness[u]
+    
+    return (suma/largo)
