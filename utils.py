@@ -257,6 +257,27 @@ def plot_rating_vs_metric(
                 ratings.append(rating)
                 metric_values.append(metric[node])
 
+    # Promedio de la métrica por intervalos de rating de tamaño 0.5
+    df_aux = pd.DataFrame({
+        "rating": ratings,
+        "metric": metric_values
+    })
+
+    bins = np.arange(
+        np.floor(min(ratings) * 2) / 2,
+        np.ceil(max(ratings) * 2) / 2 + 0.5,
+        0.5
+    )
+
+    df_aux["rating_bin"] = pd.cut(df_aux["rating"], bins=bins)
+
+    print(f"\nPromedio de {metric_name} por intervalos de rating de 0.5:")
+    print(
+        df_aux.groupby("rating_bin", observed=False)["metric"]
+        .mean()
+        .round(4)
+    )
+
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
     configs = [
@@ -290,10 +311,13 @@ def plot_metric_vs_metric(
     metric2,
     metric1_name="Metric1",
     metric2_name="Metric2",
+    vertical_lines=None
 ):
     """
-    metric       : dict {nodo: valor}
-    metric_name  : nombre para títulos y ejes
+    metric1, metric2 : listas o arrays de valores
+    metric1_name     : nombre eje X
+    metric2_name     : nombre eje Y
+    vertical_lines   : lista de valores x donde dibujar líneas verticales
     """
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
@@ -308,6 +332,16 @@ def plot_metric_vs_metric(
     for ax, (title, logx, logy) in zip(axes.flatten(), configs):
 
         ax.scatter(metric1, metric2)
+
+        if vertical_lines is not None:
+            for v in vertical_lines:
+                ax.axvline(
+                    x=v,
+                    linestyle="--",
+                    linewidth=1,
+                    alpha=0.8,
+                    color="red"
+                )
 
         if logx:
             ax.set_xscale("log")
