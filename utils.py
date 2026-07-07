@@ -466,6 +466,7 @@ def train_generator(
     csv_path,
     target_column,
     smoothing_factor=0.8,
+    transform="identity"
 ):
     """
     Entrena un generador sintético para una variable numérica en función
@@ -487,6 +488,8 @@ def train_generator(
 
     x = df["episodio"].to_numpy()
     y = df[target_column].to_numpy()
+    if transform == "log":
+        y = np.log(y)
 
     spline = UnivariateSpline(
         x,
@@ -501,7 +504,8 @@ def train_generator(
         "y": y,
         "target_column": target_column,
         "spline": spline,
-        "residuos": residuos
+        "residuos": residuos,
+        "transform": transform
     }
 
 
@@ -553,6 +557,8 @@ def generate_synthetic(
         noise = rng.choice(local_residuals)
 
         synthetic_value = trend + noise
+        if model["transform"] == "log":
+            synthetic_value = np.expm1(synthetic_value)
 
         if clip is not None:
 
