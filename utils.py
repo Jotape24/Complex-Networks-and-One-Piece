@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import powerlaw
 import numpy as np
 from collections import defaultdict
+from scipy.interpolate import UnivariateSpline
 
 @nx._dispatchable(
     graphs="B", preserve_node_attrs=True, preserve_graph_attrs=True, returns_graph=True
@@ -460,3 +461,113 @@ def avg_previous_tm_betweenness(G, nodes, prev_betweenness, largo):
         suma += prev_betweenness[u]
     
     return (suma/largo)
+
+def train_generator(
+    csv_path,
+    target_column,
+    smoothing_factor=0.8,
+):
+    """
+    Entrena un generador sintético para una variable numérica en función
+    del número de episodio.
+    """
+
+    df = pd.read_csv(csv_path)
+
+    df = (
+        df[["episodio", target_column]]
+        .dropna()
+        .sort_values("episodio")
+    )
+
+    if not np.issubdtype(df[target_column].dtype, np.number):
+        raise TypeError(
+            f"La columna '{target_column}' debe contener únicamente valores numéricos."
+        )
+
+    x = df["episodio"].to_numpy()
+    y = df[target_column].to_numpy()
+
+    spline = UnivariateSpline(
+        x,
+        y,
+        s=len(x) * smoothing_factor
+    )
+
+    residuos = y - spline(x)
+
+    return {
+        "x": x,
+        "y": y,
+        "target_column": target_column,
+        "spline": spline,
+        "residuos": residuos
+    }
+
+
+def generate_synthetic(
+    model,
+    episodes=None,
+    window=None,
+    clip=None,
+    decimals=2,
+    seed=None,
+):
+    """
+    Genera valores sintéticos para una variable en función del episodio.
+    """
+
+    rng = np.random.default_rng(seed)
+
+    x_train = model["x"]
+    spline = model["spline"]
+    residuos = model["residuos"]
+
+    if episodes is None:
+        episodes = x_train
+
+    episodes = np.asarray(episodes)
+
+    synthetic = {}
+
+    for episode in episodes:
+
+        # Tendencia estimada por el spline
+        trend = float(spline(episode))
+
+        if window is None:
+            # Utilizar todos los residuos del dataset
+            local_residuals = residuos
+
+        else:
+            # Episodio real más cercano
+            idx = np.argmin(np.abs(x_train - episode))
+
+            # Ventana local
+            start = max(0, idx - window)
+            end = min(len(residuos), idx + window + 1)
+
+            local_residuals = residuos[start:end]
+
+        # Muestrear un residuo observado
+        noise = rng.choice(local_residuals)
+
+        synthetic_value = trend + noise
+
+        if clip is not None:
+
+            minimum = -np.inf if clip[0] is None else clip[0]
+            maximum = np.inf if clip[1] is None else clip[1]
+
+            synthetic_value = np.clip(
+                synthetic_value,
+                minimum,
+                maximum
+            )
+
+        synthetic[int(episode)] = round(
+            float(synthetic_value),
+            decimals
+        )
+
+    return synthetic
