@@ -1,5 +1,6 @@
 import networkx as nx
 import pandas as pd
+import random
 import ast
 from networkx.algorithms import bipartite
 import matplotlib.pyplot as plt
@@ -110,6 +111,17 @@ def bipartite_graph(df):
     print(f"Number of nodes: {bipartite_graph.number_of_nodes()}, Number of edges: {bipartite_graph.number_of_edges()}")
     nx.write_gexf(bipartite_graph, "one_piece.gexf")
     return bipartite_graph
+
+# Función para generar un grafo bipartito partiendo usando Chung-Lu.
+def chung_lu_bipartite(prev_graph, d_i, current_j, diff_m):
+    colabs = []
+    for i in range(diff_m):
+        random_i = random.choice(d_i)
+        prev_graph.add_node(random_i, bipartite="staff")
+        prev_graph.add_edge(random_i, current_j)
+        colabs.append(random_i)
+    
+    return prev_graph, colabs
 
 
 def bipartite_projection(B, group):
